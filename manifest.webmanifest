@@ -1,0 +1,19 @@
+{
+  "name": "像素企鹅",
+  "short_name": "像素企鹅",
+  "description": "用对话记录双语翻译，并通过模型 API 翻译。",
+  "start_url": "./index.html?v=29",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f8fb",
+  "theme_color": "#00a884",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon.svg?v=8",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
