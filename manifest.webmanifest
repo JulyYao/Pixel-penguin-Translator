@@ -2,7 +2,7 @@
   "name": "像素企鹅",
   "short_name": "像素企鹅",
   "description": "用对话记录双语翻译，并通过模型 API 翻译。",
-  "start_url": "./index.html?v=37",
+  "start_url": "./index.html?v=38",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f6f8fb",

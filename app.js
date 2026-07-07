@@ -76,6 +76,7 @@ const state = {
 
 const appShell = document.querySelector(".app-shell");
 const projectList = document.querySelector("#projectList");
+const archiveFolder = document.querySelector("#archiveFolder");
 const archiveFolderButton = document.querySelector("#archiveFolderButton");
 const archiveProjectCount = document.querySelector("#archiveProjectCount");
 const archiveProjectList = document.querySelector("#archiveProjectList");
@@ -2512,11 +2513,17 @@ function renderProjects() {
     archiveProjectList.append(createProjectListItem(project));
   });
 
+  const hasArchivedProjects = archivedProjects.length > 0;
+  if (!hasArchivedProjects) {
+    archiveFolderOpen = false;
+  }
+
+  archiveFolder.hidden = !hasArchivedProjects;
   archiveProjectCount.textContent = String(archivedProjects.length);
-  archiveFolderButton.hidden = archivedProjects.length === 0;
+  archiveFolderButton.hidden = !hasArchivedProjects;
   archiveFolderButton.setAttribute("aria-expanded", String(archiveFolderOpen));
   archiveFolderButton.classList.toggle("open", archiveFolderOpen);
-  archiveProjectList.classList.toggle("hidden", !archiveFolderOpen || archivedProjects.length === 0);
+  archiveProjectList.classList.toggle("hidden", !archiveFolderOpen || !hasArchivedProjects);
 }
 
 function positionProjectMenu(menu, anchor) {
@@ -3990,7 +3997,7 @@ if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
 
   window.addEventListener("load", async () => {
     try {
-      const registration = await navigator.serviceWorker.register("service-worker.js?v=37", {
+      const registration = await navigator.serviceWorker.register("service-worker.js?v=38", {
         updateViaCache: "none",
       });
       await registration.update();

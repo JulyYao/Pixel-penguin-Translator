@@ -308,6 +308,10 @@ button:disabled {
   padding: 3px 4px 8px;
 }
 
+.archive-folder[hidden] {
+  display: none !important;
+}
+
 .archive-folder-button {
   width: 100%;
   min-height: 36px;
