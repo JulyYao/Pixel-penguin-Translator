@@ -144,14 +144,55 @@ const importMarkdownButton = document.querySelector("#importMarkdownButton");
 const saveAllMarkdownButton = document.querySelector("#saveAllMarkdownButton");
 const fileSaveStatus = document.querySelector("#fileSaveStatus");
 
+function matchSupportedUiLanguage(languageCode) {
+  const normalizedCode = String(languageCode || "").trim().replace(/_/g, "-");
+
+  if (!normalizedCode) {
+    return "";
+  }
+
+  const exactMatch = uiLanguages.find((language) => (
+    language.code.toLowerCase() === normalizedCode.toLowerCase()
+  ));
+
+  if (exactMatch) {
+    return exactMatch.code;
+  }
+
+  const baseCode = normalizedCode.split("-")[0].toLowerCase();
+  const baseMatch = uiLanguages.find((language) => language.code.split("-")[0].toLowerCase() === baseCode);
+  return baseMatch?.code || "";
+}
+
 function getSupportedUiLanguage(languageCode) {
-  return uiLanguages.some((language) => language.code === languageCode)
-    ? languageCode
-    : DEFAULT_UI_LANGUAGE;
+  return matchSupportedUiLanguage(languageCode) || DEFAULT_UI_LANGUAGE;
+}
+
+function getSystemUiLanguage() {
+  if (typeof navigator === "undefined") {
+    return DEFAULT_UI_LANGUAGE;
+  }
+
+  const candidates = [
+    ...(Array.isArray(navigator.languages) ? navigator.languages : []),
+    navigator.language,
+    navigator.userLanguage,
+  ];
+
+  for (const languageCode of candidates) {
+    const matchedLanguage = matchSupportedUiLanguage(languageCode);
+
+    if (matchedLanguage) {
+      return matchedLanguage;
+    }
+  }
+
+  return DEFAULT_UI_LANGUAGE;
 }
 
 function getInitialUiLanguage() {
-  return getSupportedUiLanguage(storage.getItem(UI_LANGUAGE_KEY) || DEFAULT_UI_LANGUAGE);
+  const savedLanguage = storage.getItem(UI_LANGUAGE_KEY);
+  return savedLanguage ? getSupportedUiLanguage(savedLanguage) : getSystemUiLanguage();
 }
 
 function t(key, replacements = {}) {
@@ -3997,7 +4038,7 @@ if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
 
   window.addEventListener("load", async () => {
     try {
-      const registration = await navigator.serviceWorker.register("service-worker.js?v=38", {
+      const registration = await navigator.serviceWorker.register("service-worker.js?v=39", {
         updateViaCache: "none",
       });
       await registration.update();
