@@ -3818,12 +3818,34 @@ document.querySelector("#translateForm").addEventListener("submit", async (event
 
   sourceText.value = "";
   clearManualComposerDirection();
-  saveState();
-  render();
-  detectedLanguage.textContent = t("translate.done", { label: translationLabel });
-  refreshApiStatus();
-  translateButton.disabled = false;
-  translateButton.textContent = t("translate.submit");
+  let saveStateError = null;
+
+  try {
+    saveState();
+  } catch (error) {
+    saveStateError = error;
+    console.warn("保存翻译结果失败。", error);
+  }
+
+  try {
+    render();
+
+    if (saveStateError) {
+      const saveFailureMessage = t("translation.saveFailed");
+      const saveFailureReason = saveStateError.message ? ` ${saveStateError.message}` : "";
+
+      detectedLanguage.textContent = saveFailureMessage;
+      apiStatus.textContent = `${saveFailureMessage}${saveFailureReason}`;
+      apiStatus.className = "api-status error";
+      showToast(`${saveFailureMessage}${saveFailureReason}`, "error", 5600);
+    } else {
+      detectedLanguage.textContent = t("translate.done", { label: translationLabel });
+      refreshApiStatus();
+    }
+  } finally {
+    translateButton.disabled = false;
+    translateButton.textContent = t("translate.submit");
+  }
 
   try {
     await saveProjectMarkdown(project, { automatic: true });
@@ -4038,7 +4060,7 @@ if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
 
   window.addEventListener("load", async () => {
     try {
-      const registration = await navigator.serviceWorker.register("service-worker.js?v=39", {
+      const registration = await navigator.serviceWorker.register("service-worker.js?v=40", {
         updateViaCache: "none",
       });
       await registration.update();
