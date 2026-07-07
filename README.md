@@ -1,5 +1,7 @@
 # 像素企鹅 Pixel Penguin
 
+[English README](README_EN.md) | [更新日志](CHANGELOG.md)
+
 像素企鹅是一个由vibe coding生成的轻量级的双语对话翻译前端工具，将翻译内容以对话方式，并保存到本地或者gist同步。
 
 ## 功能
