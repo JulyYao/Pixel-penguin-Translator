@@ -4,6 +4,8 @@ dist/
 build/
 .cache/
 .tmp/
+__pycache__/
+*.pyc
 
 # Local secrets
 .env

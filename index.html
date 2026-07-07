@@ -6,11 +6,11 @@
     <meta name="theme-color" content="#00a884" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="像素企鹅" />
-    <link rel="manifest" href="manifest.webmanifest?v=8" />
+    <link rel="manifest" href="manifest.webmanifest?v=37" />
     <link rel="icon" href="icon.svg?v=8" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg?v=8" />
     <title>像素企鹅</title>
-    <link rel="stylesheet" href="styles.css?v=29" />
+    <link rel="stylesheet" href="styles.css?v=37" />
   </head>
   <body>
     <div class="app-shell">
@@ -20,41 +20,49 @@
           <div>
             <div class="brand-title-row">
               <h1>像素企鹅</h1>
-              <span class="app-version">v1.0.1</span>
+              <span class="app-version">v1.2</span>
             </div>
-            <p>用对话记录双语翻译</p>
+            <p data-i18n="app.subtitle">用对话记录双语翻译</p>
           </div>
         </div>
-        <button id="mobileListSettingsButton" class="mobile-list-settings" type="button" aria-label="设置">设置</button>
+        <button id="mobileListSettingsButton" class="mobile-list-settings" type="button" aria-label="设置" data-i18n="settings" data-i18n-aria-label="settings">设置</button>
 
-        <button id="newProjectButton" class="primary-button" type="button">+ 新建项目</button>
-        <div id="apiStatus" class="api-status error">API 未设置</div>
+        <button id="newProjectButton" class="primary-button" type="button" data-i18n="newProject">+ 新建项目</button>
+        <div id="apiStatus" class="api-status error" data-i18n="api.unset">API 未设置</div>
         <div id="tokenUsage" class="token-usage hidden"></div>
-        <button id="mobilePullSyncButton" class="mobile-sync-button" type="button">拉取同步</button>
+        <button id="mobilePullSyncButton" class="mobile-sync-button" type="button" data-i18n="pullSync">拉取同步</button>
 
-        <div class="project-list-header">最近</div>
+        <div class="project-list-header" data-i18n="recent">最近</div>
         <div id="projectList" class="project-list"></div>
+        <section class="archive-folder">
+          <button id="archiveFolderButton" class="archive-folder-button" type="button" aria-expanded="false">
+            <span class="archive-folder-icon" aria-hidden="true"></span>
+            <span data-i18n="archiveFolder">归档文件夹</span>
+            <span id="archiveProjectCount" class="archive-project-count">0</span>
+          </button>
+          <div id="archiveProjectList" class="archive-project-list hidden"></div>
+        </section>
 
         <div class="sidebar-footer">
-          <button id="settingsButton" class="ghost-button settings-button" type="button">设置</button>
+          <button id="settingsButton" class="ghost-button settings-button" type="button" data-i18n="settings">设置</button>
         </div>
       </aside>
 
       <main class="workspace">
         <header class="workspace-header">
-          <button id="mobileBackButton" class="mobile-back-button" type="button" aria-label="返回项目列表">‹</button>
+          <button id="mobileBackButton" class="mobile-back-button" type="button" aria-label="返回项目列表" data-i18n-aria-label="backProjectList">‹</button>
           <div class="workspace-title-block">
-            <p class="eyebrow">当前项目</p>
-            <h2 id="currentProjectName">还没有项目</h2>
+            <p class="eyebrow" data-i18n="currentProject">当前项目</p>
+            <h2 id="currentProjectName" data-i18n="noProject">还没有项目</h2>
           </div>
-          <div id="languagePair" class="language-pair">请先新建项目</div>
-          <button id="mobileChatSettingsButton" class="mobile-chat-settings" type="button" aria-label="设置">设置</button>
+          <button id="languagePair" class="language-pair" type="button" data-i18n="selectProjectFirst">请先新建项目</button>
+          <button id="mobileChatSettingsButton" class="mobile-chat-settings" type="button" aria-label="设置" data-i18n="settings" data-i18n-aria-label="settings">设置</button>
         </header>
 
         <section id="emptyState" class="empty-state">
-          <h3>先创建一个对话项目</h3>
-          <p>例如“和日本客户沟通”，选择中文和日语，然后就可以开始左右对照翻译。</p>
-          <button id="emptyNewProjectButton" class="primary-button" type="button">新建项目</button>
+          <h3 data-i18n="empty.title">先创建一个对话项目</h3>
+          <p data-i18n="empty.description">例如“和日本客户沟通”，选择中文和日语，然后就可以开始左右对照翻译。</p>
+          <button id="emptyNewProjectButton" class="primary-button" type="button" data-i18n="newProject">新建项目</button>
         </section>
 
         <section id="chatArea" class="chat-area hidden">
@@ -62,11 +70,11 @@
 
           <form id="translateForm" class="composer">
             <div class="composer-row">
-              <span>自动识别输入语言</span>
-              <strong id="detectedLanguage">等待输入</strong>
+              <span data-i18n="autoDetectInput">自动识别输入语言</span>
+              <button id="detectedLanguage" class="detected-language-toggle" type="button" data-i18n="waitingInput">等待输入</button>
             </div>
-            <textarea id="sourceText" placeholder="输入一句对话，例如：你好，很高兴认识你。" rows="4"></textarea>
-            <button class="primary-button translate-button" type="submit">翻译并加入对话</button>
+            <textarea id="sourceText" placeholder="输入一句对话，例如：你好，很高兴认识你。" rows="4" data-i18n-placeholder="source.placeholder"></textarea>
+            <button class="primary-button translate-button" type="submit" data-i18n="translate.submit">翻译并加入对话</button>
           </form>
         </section>
       </main>
@@ -74,27 +82,27 @@
 
     <dialog id="projectDialog" class="project-dialog">
       <form id="projectForm" method="dialog">
-        <h2>新建项目</h2>
+        <h2 data-i18n="projectDialog.newTitle">新建项目</h2>
         <label>
-          项目名称
-          <input id="projectNameInput" type="text" placeholder="例如：和法国朋友聊天" required />
+          <span data-i18n="projectName">项目名称</span>
+          <input id="projectNameInput" type="text" placeholder="例如：和法国朋友聊天" required data-i18n-placeholder="projectName.placeholder" />
         </label>
         <div class="language-grid">
           <label class="language-field">
-            语言-左
+            <span data-i18n="languageLeft">语言-左</span>
             <select id="languageAInput"></select>
-            <input id="customLanguageAInput" class="custom-language-input hidden" type="text" placeholder="输入语言，例如：越南语" />
+            <input id="customLanguageAInput" class="custom-language-input hidden" type="text" placeholder="输入语言，例如：越南语" data-i18n-placeholder="customLanguage.placeholder.a" />
           </label>
           <label class="language-field">
-            语言-右
+            <span data-i18n="languageRight">语言-右</span>
             <select id="languageBInput"></select>
-            <input id="customLanguageBInput" class="custom-language-input hidden" type="text" placeholder="输入语言，例如：土耳其语" />
+            <input id="customLanguageBInput" class="custom-language-input hidden" type="text" placeholder="输入语言，例如：土耳其语" data-i18n-placeholder="customLanguage.placeholder.b" />
           </label>
         </div>
-        <div id="projectLanguageReviewStatus" class="api-dialog-status hidden">正在审核自定义语言...</div>
+        <div id="projectLanguageReviewStatus" class="api-dialog-status hidden" data-i18n="language.reviewing">正在审核自定义语言...</div>
         <div class="dialog-actions">
-          <button id="cancelProjectButton" class="ghost-button" type="button">取消</button>
-          <button class="primary-button" type="submit">创建</button>
+          <button id="cancelProjectButton" class="ghost-button" type="button" data-i18n="cancel">取消</button>
+          <button class="primary-button" type="submit" data-i18n="create">创建</button>
         </div>
       </form>
     </dialog>
@@ -103,23 +111,27 @@
       <form id="settingsForm" method="dialog">
         <header class="settings-header">
           <div>
-            <h2>设置</h2>
-            <p>模型 API、备用 API 和本地代理</p>
+            <h2 data-i18n="settings.title">设置</h2>
+            <p data-i18n="settings.subtitle">模型 API、备用 API 和本地代理</p>
           </div>
-          <button id="closeSettingsButton" class="icon-button" type="button" aria-label="关闭">×</button>
+          <label class="ui-language-field">
+            <span data-i18n="settings.uiLanguage">界面语言</span>
+            <select id="uiLanguageInput"></select>
+          </label>
+          <button id="closeSettingsButton" class="icon-button" type="button" aria-label="关闭" data-i18n-aria-label="cancel">×</button>
         </header>
 
         <div class="settings-tabs">
-          <button class="settings-tab active" type="button" data-settings-tab="primary">主 API</button>
-          <button class="settings-tab" type="button" data-settings-tab="backup">备用 API</button>
-          <button class="settings-tab" type="button" data-settings-tab="proxy">本地代理</button>
-          <button class="settings-tab" type="button" data-settings-tab="sync">同步</button>
-          <button class="settings-tab" type="button" data-settings-tab="files">文件</button>
+          <button class="settings-tab active" type="button" data-settings-tab="primary" data-i18n="settings.tab.primary">主 API</button>
+          <button class="settings-tab" type="button" data-settings-tab="backup" data-i18n="settings.tab.backup">备用 API</button>
+          <button class="settings-tab" type="button" data-settings-tab="proxy" data-i18n="settings.tab.proxy">本地代理</button>
+          <button class="settings-tab" type="button" data-settings-tab="sync" data-i18n="settings.tab.sync">同步</button>
+          <button class="settings-tab" type="button" data-settings-tab="files" data-i18n="settings.tab.files">文件</button>
         </div>
 
         <section class="settings-panel active" data-settings-panel="primary">
           <label>
-            服务商
+            <span data-i18n="provider">服务商</span>
             <select id="apiProviderInput">
               <option value="openai">ChatGPT / OpenAI</option>
               <option value="deepseek">DeepSeek</option>
@@ -129,49 +141,49 @@
             </select>
           </label>
           <label>
-            API Key
+            <span data-i18n="apiKey">API Key</span>
             <div class="secret-input">
               <input id="apiKeyInput" type="password" placeholder="sk-..." autocomplete="off" />
-              <button class="icon-button secret-toggle" type="button" data-secret-target="apiKeyInput" aria-label="显示 API Key">👁</button>
+              <button class="icon-button secret-toggle" type="button" data-secret-target="apiKeyInput" aria-label="显示 API Key" data-i18n-aria-label="showApiKey">👁</button>
             </div>
           </label>
           <div class="model-row">
             <label>
-              模型
+              <span data-i18n="model">模型</span>
               <select id="apiModelSelect"></select>
             </label>
-            <button id="loadModelsButton" class="ghost-button" type="button">读取模型</button>
+            <button id="loadModelsButton" class="ghost-button" type="button" data-i18n="loadModels">读取模型</button>
           </div>
-          <p class="settings-hint qwen-model-recommendation">像素企鹅强烈推荐使用 QWEN-MT-TURBO 模型</p>
+          <p class="settings-hint qwen-model-recommendation" data-i18n="qwenHint">像素企鹅强烈推荐使用 QWEN-MT-TURBO 模型</p>
           <label>
-            手动模型
+            <span data-i18n="manualModel">手动模型</span>
             <input id="apiModelInput" type="text" value="gpt-4o-mini" placeholder="gpt-4o-mini / deepseek-v4-flash" />
           </label>
           <label>
-            Base URL
+            <span data-i18n="baseUrl">Base URL</span>
             <input id="apiBaseUrlInput" type="url" value="https://api.openai.com/v1" placeholder="https://api.openai.com/v1" />
           </label>
           <label>
-            翻译风格
+            <span data-i18n="translationStyle">翻译风格</span>
             <select id="apiTranslationModeInput">
-              <option value="faithful">商务直译：尽量贴近原文</option>
-              <option value="natural">自然商务：轻微润色</option>
-              <option value="concise">简洁：压缩表达</option>
+              <option value="faithful" data-i18n="style.faithful">商务直译：尽量贴近原文</option>
+              <option value="natural" data-i18n="style.natural">自然商务：轻微润色</option>
+              <option value="concise" data-i18n="style.concise">简洁：压缩表达</option>
             </select>
           </label>
           <label class="checkbox-row subtle-checkbox">
             <input id="tokenUsageVisibleInput" type="checkbox" checked />
-            显示 Token 使用量
+            <span data-i18n="showTokenUsage">显示 Token 使用量</span>
           </label>
         </section>
 
         <section class="settings-panel" data-settings-panel="backup">
           <label class="checkbox-row">
             <input id="backupEnabledInput" type="checkbox" />
-            启用备用 API
+            <span data-i18n="backup.enable">启用备用 API</span>
           </label>
           <label>
-            服务商
+            <span data-i18n="provider">服务商</span>
             <select id="backupProviderInput">
               <option value="openai">ChatGPT / OpenAI</option>
               <option value="deepseek">DeepSeek</option>
@@ -181,114 +193,117 @@
             </select>
           </label>
           <label>
-            API Key
+            <span data-i18n="apiKey">API Key</span>
             <div class="secret-input">
-              <input id="backupApiKeyInput" type="password" placeholder="备用 API Key" autocomplete="off" />
-              <button class="icon-button secret-toggle" type="button" data-secret-target="backupApiKeyInput" aria-label="显示备用 API Key">👁</button>
+              <input id="backupApiKeyInput" type="password" placeholder="备用 API Key" autocomplete="off" data-i18n-placeholder="backup.apiKey.placeholder" />
+              <button class="icon-button secret-toggle" type="button" data-secret-target="backupApiKeyInput" aria-label="显示备用 API Key" data-i18n-aria-label="showApiKey">👁</button>
             </div>
           </label>
           <div class="model-row">
             <label>
-              模型
+              <span data-i18n="model">模型</span>
               <select id="backupModelSelect"></select>
             </label>
-            <button id="loadBackupModelsButton" class="ghost-button" type="button">读取模型</button>
+            <button id="loadBackupModelsButton" class="ghost-button" type="button" data-i18n="loadModels">读取模型</button>
           </div>
           <label>
-            手动模型
+            <span data-i18n="manualModel">手动模型</span>
             <input id="backupModelInput" type="text" value="deepseek-v4-flash" placeholder="deepseek-v4-flash" />
           </label>
           <label>
-            Base URL
+            <span data-i18n="baseUrl">Base URL</span>
             <input id="backupBaseUrlInput" type="url" value="https://api.deepseek.com" placeholder="https://api.deepseek.com" />
           </label>
-          <div class="api-dialog-status">主 API 单次翻译连续超时 3 次后，会临时使用备用 API；下一次翻译仍先尝试主 API。</div>
+          <div class="api-dialog-status" data-i18n="backup.hint">主 API 单次翻译连续超时 3 次后，会临时使用备用 API；下一次翻译仍先尝试主 API。</div>
         </section>
 
         <section class="settings-panel" data-settings-panel="proxy">
           <label class="checkbox-row">
             <input id="proxyEnabledInput" type="checkbox" />
-            启用本地代理配置
+            <span data-i18n="proxy.enable">启用本地代理配置</span>
           </label>
           <div class="language-grid">
             <label>
-              类型
+              <span data-i18n="proxy.type">类型</span>
               <select id="proxyTypeInput">
                 <option value="http">HTTP</option>
                 <option value="socks5">SOCKS5</option>
               </select>
             </label>
             <label>
-              端口
+              <span data-i18n="proxy.port">端口</span>
               <input id="proxyPortInput" type="number" min="1" max="65535" placeholder="7890" />
             </label>
           </div>
           <label>
-            主机
+            <span data-i18n="proxy.host">主机</span>
             <input id="proxyHostInput" type="text" placeholder="127.0.0.1" />
           </label>
-          <div class="api-dialog-status">浏览器网页不能直接为 fetch 指定 SOCKS5/HTTP 代理；这里会保存配置，供之后的本地代理桥或苹果 App 使用。</div>
+          <div class="api-dialog-status" data-i18n="proxy.hint">浏览器网页不能直接为 fetch 指定 SOCKS5/HTTP 代理；这里会保存配置，供之后的本地代理桥或苹果 App 使用。</div>
         </section>
 
         <section class="settings-panel" data-settings-panel="sync">
           <label class="checkbox-row">
             <input id="syncEnabledInput" type="checkbox" />
-            启用项目内容同步
+            <span data-i18n="sync.enable">启用项目内容同步</span>
           </label>
           <label>
-            同步方式
+            <span data-i18n="sync.method">同步方式</span>
             <select id="syncProviderInput">
-              <option value="gist">GitHub Gist 私有同步</option>
-              <option value="custom">自定义同步服务</option>
+              <option value="gist" data-i18n="sync.gist">GitHub Gist 私有同步</option>
+              <option value="custom" data-i18n="sync.custom">自定义同步服务</option>
             </select>
           </label>
           <label>
-            Gist ID / 同步服务地址
-            <input id="syncEndpointInput" type="text" placeholder="留空可首次上传时自动创建，或填 Gist ID / 自定义服务地址" />
+            <span data-i18n="sync.endpoint">Gist ID / 同步服务地址</span>
+            <input id="syncEndpointInput" type="text" placeholder="留空可首次上传时自动创建，或填 Gist ID / 自定义服务地址" data-i18n-placeholder="sync.endpoint.placeholder" />
           </label>
           <label>
-            访问令牌 / GitHub Token
+            <span data-i18n="sync.token">访问令牌 / GitHub Token</span>
             <div class="secret-input">
-              <input id="syncTokenInput" type="password" placeholder="GitHub token，或自定义服务鉴权 token" autocomplete="off" />
-              <button class="icon-button secret-toggle" type="button" data-secret-target="syncTokenInput" aria-label="显示访问令牌">👁</button>
+              <input id="syncTokenInput" type="password" placeholder="GitHub token，或自定义服务鉴权 token" autocomplete="off" data-i18n-placeholder="sync.token.placeholder" />
+              <button class="icon-button secret-toggle" type="button" data-secret-target="syncTokenInput" aria-label="显示访问令牌" data-i18n-aria-label="sync.showToken">👁</button>
             </div>
           </label>
           <label class="checkbox-row">
             <input id="syncOnOpenInput" type="checkbox" checked />
-            打开项目时同步一次
+            <span data-i18n="sync.onOpen">打开项目时同步一次</span>
           </label>
           <label class="checkbox-row">
             <input id="syncAfterMessageInput" type="checkbox" checked />
-            新增翻译后上传一次
+            <span data-i18n="sync.afterMessage">新增翻译后上传一次</span>
           </label>
-          <div class="api-dialog-status">推荐使用 GitHub Gist 私有同步：老设备点“上传全部”，新设备填同一个 Token 和 Gist ID 后点“拉取同步”。自定义服务仍支持 /projects/sync 和 /projects/sync-all。</div>
+          <div class="api-dialog-status" data-i18n="sync.hint">推荐使用 GitHub Gist 私有同步：老设备点“上传全部”，新设备填同一个 Token 和 Gist ID 后点“拉取同步”。自定义服务仍支持 /projects/sync 和 /projects/sync-all。</div>
         </section>
 
         <section class="settings-panel" data-settings-panel="files">
           <label class="checkbox-row">
             <input id="fileSaveEnabledInput" type="checkbox" />
-            启用 Markdown 文件保存
+            <span data-i18n="files.enable">启用 Markdown 文件保存</span>
           </label>
           <div class="file-save-row">
-            <button id="chooseRecordsFolderButton" class="ghost-button" type="button">连接对话记录文件夹</button>
-            <button id="importMarkdownButton" class="ghost-button" type="button">读取本地记录</button>
-            <button id="saveAllMarkdownButton" class="ghost-button" type="button">立即保存全部</button>
+            <button id="chooseRecordsFolderButton" class="ghost-button" type="button" data-i18n="files.chooseFolder">连接对话记录文件夹</button>
+            <button id="importMarkdownButton" class="ghost-button" type="button" data-i18n="files.import">读取本地记录</button>
+            <button id="saveAllMarkdownButton" class="ghost-button" type="button" data-i18n="files.saveAll">立即保存全部</button>
           </div>
-          <div id="fileSaveStatus" class="api-dialog-status">请在 Edge 中选择项目里的“对话记录”文件夹。每个项目会保存为一个文件夹，里面包含 `对话.md`。</div>
+          <div id="fileSaveStatus" class="api-dialog-status" data-i18n="files.status">请在 Edge 中选择项目里的“对话记录”文件夹。每个项目会保存为一个文件夹，里面包含 `对话.md`。</div>
         </section>
 
-        <div id="settingsStatus" class="api-dialog-status">API Key 会保存在当前浏览器本地。</div>
+        <div id="settingsStatus" class="api-dialog-status" data-i18n="settings.status">API Key 会保存在当前浏览器本地。</div>
         <div class="dialog-actions">
-          <button id="testApiButton" class="ghost-button" type="button">测试连接</button>
-          <button id="testBackupApiButton" class="ghost-button" type="button">测试备用</button>
-          <button id="testSyncButton" class="ghost-button" type="button">测试同步</button>
-          <button id="pullSyncButton" class="ghost-button" type="button">拉取同步</button>
-          <button id="pushSyncButton" class="ghost-button" type="button">上传全部</button>
-          <button class="primary-button" type="submit">保存</button>
+          <button id="testApiButton" class="ghost-button" type="button" data-i18n="test.connection">测试连接</button>
+          <button id="testBackupApiButton" class="ghost-button" type="button" data-i18n="test.backup">测试备用</button>
+          <button id="testSyncButton" class="ghost-button" type="button" data-i18n="test.sync">测试同步</button>
+          <button id="pullSyncButton" class="ghost-button" type="button" data-i18n="pullSync">拉取同步</button>
+          <button id="pushSyncButton" class="ghost-button" type="button" data-i18n="sync.uploadAll">上传全部</button>
+          <button class="primary-button" type="submit" data-i18n="save">保存</button>
         </div>
       </form>
     </dialog>
 
-    <script src="app.js?v=29"></script>
+    <script src="app-config.js?v=37"></script>
+    <script src="app-utils.js?v=37"></script>
+    <script src="language-detector.js?v=37"></script>
+    <script src="app.js?v=37"></script>
   </body>
 </html>

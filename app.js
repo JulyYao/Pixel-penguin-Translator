@@ -1,146 +1,35 @@
-﻿const languages = [
-  "中文",
-  "英语",
-  "日语",
-  "韩语",
-  "法语",
-  "德语",
-  "西班牙语",
-  "俄语",
-  "阿拉伯语",
-  "葡萄牙语",
-];
-
-const CUSTOM_LANGUAGE_VALUE = "__custom_language__";
-const customLanguageNames = new Set([
-  ...languages,
-  "越南语",
-  "泰语",
-  "印尼语",
-  "马来语",
-  "土耳其语",
-  "意大利语",
-  "荷兰语",
-  "波兰语",
-  "乌克兰语",
-  "希伯来语",
-  "印地语",
-  "孟加拉语",
-  "乌尔都语",
-  "波斯语",
-  "希腊语",
-  "瑞典语",
-  "挪威语",
-  "丹麦语",
-  "芬兰语",
-  "捷克语",
-  "匈牙利语",
-  "罗马尼亚语",
-  "保加利亚语",
-  "塞尔维亚语",
-  "克罗地亚语",
-  "斯洛伐克语",
-  "斯洛文尼亚语",
-  "立陶宛语",
-  "拉脱维亚语",
-  "爱沙尼亚语",
-  "斯瓦希里语",
-  "菲律宾语",
-  "他加禄语",
-  "缅甸语",
-  "高棉语",
-  "老挝语",
-  "蒙古语",
-  "尼泊尔语",
-  "僧伽罗语",
-  "泰米尔语",
-  "泰卢固语",
-  "马拉地语",
-  "古吉拉特语",
-  "旁遮普语",
-  "加拿大语",
-  "马拉雅拉姆语",
-  "阿姆哈拉语",
-  "豪萨语",
-  "约鲁巴语",
-  "祖鲁语",
-  "南非荷兰语",
-  "加泰罗尼亚语",
-  "巴斯克语",
-  "加利西亚语",
-  "爱尔兰语",
-  "威尔士语",
-  "冰岛语",
-  "马耳他语",
-  "阿尔巴尼亚语",
-  "马其顿语",
-  "格鲁吉亚语",
-  "亚美尼亚语",
-  "阿塞拜疆语",
-  "哈萨克语",
-  "乌兹别克语",
-  "吉尔吉斯语",
-  "塔吉克语",
-  "普什图语",
-  "库尔德语",
-  "索马里语",
-  "拉丁语",
-  "世界语",
-]);
-
-const STORAGE_KEY = "dialogue-translator-projects-v1";
-const API_SETTINGS_KEY = "dialogue-translator-api-settings-v1";
-const CLIENT_ID_KEY = "dialogue-translator-client-id-v1";
-const FILE_SETTINGS_KEY = "dialogue-translator-file-settings-v1";
-const FILE_HANDLE_DB = "dialogue-translator-file-handles";
-const FILE_HANDLE_STORE = "handles";
-const RECORDS_DIRECTORY_HANDLE_KEY = "records-directory";
-const API_PROVIDERS = {
-  openai: {
-    label: "ChatGPT / OpenAI",
-    baseUrl: "https://api.openai.com/v1",
-    model: "gpt-4o-mini",
-    models: ["gpt-4o-mini", "gpt-4o", "gpt-4.1-mini", "gpt-4.1", "o4-mini"],
-  },
-  deepseek: {
-    label: "DeepSeek",
-    baseUrl: "https://api.deepseek.com",
-    model: "deepseek-v4-flash",
-    models: ["deepseek-v4-flash", "deepseek-v4-pro", "deepseek-chat", "deepseek-reasoner"],
-  },
-  qwen: {
-    label: "千问 / Qwen",
-    baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1",
-    model: "qwen-mt-plus",
-    models: [
-      "qwen-mt-plus",
-      "qwen-mt-turbo",
-      "qwen-plus",
-      "qwen-plus-latest",
-      "qwen-max",
-      "qwen-max-latest",
-      "qwen-turbo",
-      "qwen-turbo-latest",
-      "qwen-flash",
-    ],
-  },
-  gemini: {
-    label: "Gemini",
-    baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai",
-    model: "gemini-2.5-flash",
-    models: ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash", "gemini-2.0-flash-lite"],
-  },
-  custom: {
-    label: "自定义",
-    baseUrl: "",
-    model: "",
-    models: [],
-  },
-};
-const REQUEST_TIMEOUT_MS = 12000;
-const PRIMARY_TIMEOUT_LIMIT = 1;
-const GIST_SYNC_FILE = "dialogue-translator-sync.json";
+const {
+  languages,
+  customLanguageNames,
+  uiLanguages,
+  languageLocaleCodes,
+  uiText,
+  DEFAULT_UI_LANGUAGE,
+  CUSTOM_LANGUAGE_VALUE,
+  UI_LANGUAGE_KEY,
+  STORAGE_KEY,
+  API_SETTINGS_KEY,
+  CLIENT_ID_KEY,
+  FILE_SETTINGS_KEY,
+  FILE_HANDLE_DB,
+  FILE_HANDLE_STORE,
+  RECORDS_DIRECTORY_HANDLE_KEY,
+  API_PROVIDERS,
+  REQUEST_TIMEOUT_MS,
+  PRIMARY_TIMEOUT_LIMIT,
+  GIST_SYNC_FILE,
+  MANUAL_TRANSLATION_DIRECTION_MS,
+} = window.PixelPenguinConfig;
+const {
+  createStorage,
+  isProtectedSecret,
+  normalizeLanguageName,
+  protectSecret,
+  revealSecret,
+} = window.PixelPenguinUtils;
+const { detectLanguage } = window.PixelPenguinLanguage;
 const storage = createStorage();
+let activeUiLanguage = getInitialUiLanguage();
 
 const state = {
   projects: [],
@@ -187,6 +76,9 @@ const state = {
 
 const appShell = document.querySelector(".app-shell");
 const projectList = document.querySelector("#projectList");
+const archiveFolderButton = document.querySelector("#archiveFolderButton");
+const archiveProjectCount = document.querySelector("#archiveProjectCount");
+const archiveProjectList = document.querySelector("#archiveProjectList");
 const currentProjectName = document.querySelector("#currentProjectName");
 const languagePair = document.querySelector("#languagePair");
 const emptyState = document.querySelector("#emptyState");
@@ -211,6 +103,7 @@ const apiStatus = document.querySelector("#apiStatus");
 const tokenUsage = document.querySelector("#tokenUsage");
 const settingsDialog = document.querySelector("#settingsDialog");
 const settingsForm = document.querySelector("#settingsForm");
+const uiLanguageInput = document.querySelector("#uiLanguageInput");
 const closeSettingsButton = document.querySelector("#closeSettingsButton");
 const apiProviderInput = document.querySelector("#apiProviderInput");
 const apiKeyInput = document.querySelector("#apiKeyInput");
@@ -250,17 +143,112 @@ const importMarkdownButton = document.querySelector("#importMarkdownButton");
 const saveAllMarkdownButton = document.querySelector("#saveAllMarkdownButton");
 const fileSaveStatus = document.querySelector("#fileSaveStatus");
 
-function createStorage() {
-  if (typeof localStorage !== "undefined") {
-    return localStorage;
+function getSupportedUiLanguage(languageCode) {
+  return uiLanguages.some((language) => language.code === languageCode)
+    ? languageCode
+    : DEFAULT_UI_LANGUAGE;
+}
+
+function getInitialUiLanguage() {
+  return getSupportedUiLanguage(storage.getItem(UI_LANGUAGE_KEY) || DEFAULT_UI_LANGUAGE);
+}
+
+function t(key, replacements = {}) {
+  const pack = uiText[activeUiLanguage] || uiText[DEFAULT_UI_LANGUAGE] || {};
+  const fallback = uiText[DEFAULT_UI_LANGUAGE] || {};
+  let value = pack[key] || fallback[key] || key;
+
+  Object.entries(replacements).forEach(([name, replacement]) => {
+    value = value.replaceAll(`{${name}}`, String(replacement));
+  });
+
+  return value;
+}
+
+function getVisibleTextLength(text) {
+  return Array.from(String(text || "").replace(/\s+/g, " ").trim()).length;
+}
+
+function applyTextFit(element) {
+  const length = getVisibleTextLength(element.textContent);
+  element.classList.remove("text-fit-sm", "text-fit-xs", "text-fit-xxs");
+
+  if (length >= 34) {
+    element.classList.add("text-fit-xxs");
+  } else if (length >= 24) {
+    element.classList.add("text-fit-xs");
+  } else if (length >= 16) {
+    element.classList.add("text-fit-sm");
+  }
+}
+
+function refreshUiTextFit() {
+  document.querySelectorAll([
+    ".primary-button",
+    ".ghost-button",
+    ".settings-tab",
+    ".project-menu-action",
+    ".language-pair",
+    ".detected-language-toggle",
+    ".mobile-sync-button",
+    ".archive-folder-button",
+  ].join(", ")).forEach(applyTextFit);
+}
+
+function getUiLocale() {
+  const language = uiLanguages.find((item) => item.code === activeUiLanguage);
+  return language?.htmlLang || DEFAULT_UI_LANGUAGE;
+}
+
+function formatLanguageName(language) {
+  const localeCode = languageLocaleCodes[language];
+
+  if (!localeCode || typeof Intl === "undefined" || typeof Intl.DisplayNames !== "function") {
+    return language;
   }
 
-  const memoryStore = new Map();
+  try {
+    return new Intl.DisplayNames([getUiLocale()], { type: "language" }).of(localeCode) || language;
+  } catch (error) {
+    return language;
+  }
+}
 
-  return {
-    getItem: (key) => memoryStore.get(key) || null,
-    setItem: (key, value) => memoryStore.set(key, String(value)),
-  };
+function formatLanguagePair(fromLanguage, toLanguage, separator = "⇄") {
+  return `${formatLanguageName(fromLanguage)} ${separator} ${formatLanguageName(toLanguage)}`;
+}
+
+function fillUiLanguageSelect() {
+  if (!uiLanguageInput) {
+    return;
+  }
+
+  uiLanguageInput.innerHTML = "";
+  uiLanguages.forEach((language) => {
+    const option = document.createElement("option");
+    option.value = language.code;
+    option.textContent = language.label;
+    option.selected = language.code === activeUiLanguage;
+    uiLanguageInput.append(option);
+  });
+}
+
+function applyUiLanguage() {
+  document.documentElement.lang = getUiLocale();
+
+  document.querySelectorAll("[data-i18n]").forEach((element) => {
+    element.textContent = t(element.dataset.i18n);
+  });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((element) => {
+    element.setAttribute("placeholder", t(element.dataset.i18nPlaceholder));
+  });
+  document.querySelectorAll("[data-i18n-aria-label]").forEach((element) => {
+    element.setAttribute("aria-label", t(element.dataset.i18nAriaLabel));
+  });
+
+  fillUiLanguageSelect();
+  updateSyncProviderHints();
+  refreshUiTextFit();
 }
 
 function fillLanguageSelect(select, selectedValue) {
@@ -268,20 +256,16 @@ function fillLanguageSelect(select, selectedValue) {
   languages.forEach((language) => {
     const option = document.createElement("option");
     option.value = language;
-    option.textContent = language;
+    option.textContent = formatLanguageName(language);
     option.selected = language === selectedValue;
     select.append(option);
   });
 
   const customOption = document.createElement("option");
   customOption.value = CUSTOM_LANGUAGE_VALUE;
-  customOption.textContent = "自定义语言";
+  customOption.textContent = t("customLanguage");
   customOption.selected = selectedValue && !languages.includes(selectedValue);
   select.append(customOption);
-}
-
-function normalizeLanguageName(value) {
-  return value.trim().replace(/\s+/g, " ");
 }
 
 function getProjectLanguageValue(select, customInput) {
@@ -586,18 +570,29 @@ function saveState() {
   );
 }
 
-function loadApiSettings() {
+async function loadApiSettings() {
   try {
     const savedSettings = JSON.parse(storage.getItem(API_SETTINGS_KEY));
 
     if (savedSettings) {
+      const primarySettings = savedSettings.primary || savedSettings;
+      const backupSettings = savedSettings.backup || {};
+      const syncSettings = savedSettings.sync || {};
+      const shouldMigrateSecrets = [
+        primarySettings.apiKey,
+        backupSettings.apiKey,
+        syncSettings.token,
+      ].some((value) => value && !isProtectedSecret(value));
+
       state.apiSettings = {
         ...state.apiSettings,
-        ...(savedSettings.primary || savedSettings),
+        ...primarySettings,
+        apiKey: await revealSecret(primarySettings.apiKey, storage),
       };
       state.backupApiSettings = {
         ...state.backupApiSettings,
-        ...(savedSettings.backup || {}),
+        ...backupSettings,
+        apiKey: await revealSecret(backupSettings.apiKey, storage),
       };
       state.proxySettings = {
         ...state.proxySettings,
@@ -605,8 +600,13 @@ function loadApiSettings() {
       };
       state.syncSettings = {
         ...state.syncSettings,
-        ...(savedSettings.sync || {}),
+        ...syncSettings,
+        token: await revealSecret(syncSettings.token, storage),
       };
+
+      if (shouldMigrateSecrets) {
+        saveApiSettings();
+      }
     }
   } catch {
     state.apiSettings = {
@@ -643,16 +643,30 @@ function loadApiSettings() {
   }
 }
 
-function saveApiSettings() {
-  storage.setItem(
-    API_SETTINGS_KEY,
-    JSON.stringify({
-      primary: state.apiSettings,
-      backup: state.backupApiSettings,
-      proxy: state.proxySettings,
-      sync: state.syncSettings,
-    }),
-  );
+async function serializeApiSettingsForStorage() {
+  return {
+    primary: {
+      ...state.apiSettings,
+      apiKey: await protectSecret(state.apiSettings.apiKey, storage),
+    },
+    backup: {
+      ...state.backupApiSettings,
+      apiKey: await protectSecret(state.backupApiSettings.apiKey, storage),
+    },
+    proxy: state.proxySettings,
+    sync: {
+      ...state.syncSettings,
+      token: await protectSecret(state.syncSettings.token, storage),
+    },
+  };
+}
+
+async function saveApiSettings() {
+  try {
+    storage.setItem(API_SETTINGS_KEY, JSON.stringify(await serializeApiSettingsForStorage()));
+  } catch (error) {
+    console.warn("保存设置失败。", error);
+  }
 }
 
 function loadFileSettings() {
@@ -947,7 +961,7 @@ function fillModelSelect(select, models, selectedModel) {
 
   const customOption = document.createElement("option");
   customOption.value = "__custom";
-  customOption.textContent = "手动输入";
+  customOption.textContent = t("manualInput");
   customOption.selected = !uniqueModels.includes(selectedModel);
   select.append(customOption);
 }
@@ -1022,11 +1036,11 @@ function getSyncSettingsFromForm() {
 function updateSyncProviderHints() {
   const isGist = syncProviderInput.value === "gist";
   syncEndpointInput.placeholder = isGist
-    ? "可留空；首次上传自动创建 Gist，之后这里会显示 Gist ID"
-    : "https://your-server.example.com";
+    ? t("sync.endpoint.placeholder")
+    : t("sync.endpoint.customPlaceholder");
   syncTokenInput.placeholder = isGist
-    ? "GitHub fine-grained token，需要 Gists 权限"
-    : "可选，用于你的服务器鉴权";
+    ? t("sync.token.placeholder")
+    : t("sync.token.customPlaceholder");
 }
 
 function renderSettingsForm() {
@@ -1582,6 +1596,9 @@ function isRemoteMessageNewer(localMessage, remoteMessage) {
 
 function mergeProjects(localProject, remoteProject) {
   const normalizedRemote = normalizeProject(remoteProject);
+  const localProjectTime = getProjectUpdatedTime(localProject);
+  const remoteProjectTime = getProjectUpdatedTime(normalizedRemote);
+  const projectSource = remoteProjectTime > localProjectTime ? normalizedRemote : localProject;
   const localMessages = filterDeletedMessages(localProject.id, Array.isArray(localProject.messages) ? localProject.messages : []);
   const remoteMessages = Array.isArray(normalizedRemote.messages) ? normalizedRemote.messages : [];
   const messageMap = new Map(localMessages.map((message) => [message.id, message]));
@@ -1601,12 +1618,12 @@ function mergeProjects(localProject, remoteProject) {
 
   const mergedProject = {
     ...localProject,
-    ...normalizedRemote,
+    ...projectSource,
     id: localProject.id,
     messages: [...localOrder, ...remoteOnly]
       .map((id) => messageMap.get(id))
       .filter(Boolean),
-    updatedAt: getProjectUpdatedTime(normalizedRemote) > getProjectUpdatedTime(localProject)
+    updatedAt: remoteProjectTime > localProjectTime
       ? normalizedRemote.updatedAt
       : localProject.updatedAt,
   };
@@ -2215,7 +2232,7 @@ async function checkApiConnection(settings = state.apiSettings) {
 
 function renderApiStatus(details) {
   if (!state.apiSettings.apiKey) {
-    apiStatus.textContent = "API 未设置";
+    apiStatus.textContent = t("api.unset");
     apiStatus.className = "api-status error";
     renderTokenUsage();
     return;
@@ -2297,53 +2314,6 @@ Source text:
 ${text}`,
     },
   ], { text, fromLanguage, toLanguage });
-}
-
-function detectLanguage(text, project) {
-  const normalizedText = text.trim();
-
-  if (!normalizedText) {
-    return null;
-  }
-
-  const scores = {
-    [project.languageA]: scoreLanguage(normalizedText, project.languageA),
-    [project.languageB]: scoreLanguage(normalizedText, project.languageB),
-  };
-
-  if (scores[project.languageA] === scores[project.languageB]) {
-    return project.languageA;
-  }
-
-  return scores[project.languageA] > scores[project.languageB] ? project.languageA : project.languageB;
-}
-
-function scoreLanguage(text, language) {
-  const lowerText = text.toLowerCase();
-  const rules = {
-    中文: /[\u3400-\u9fff]/g,
-    日语: /[\u3040-\u30ff]/g,
-    韩语: /[\uac00-\ud7af]/g,
-    俄语: /[\u0400-\u04ff]/g,
-    阿拉伯语: /[\u0600-\u06ff]/g,
-    英语: /\b(the|and|you|hello|hi|thanks|please|is|are|to|of|for)\b/g,
-    法语: /\b(le|la|les|bonjour|merci|vous|etre|est|pour|avec|une|des)\b|[àâçéèêëîïôûùüÿœ]/g,
-    德语: /\b(der|die|das|und|ich|sie|danke|bitte|nicht|ein|eine|ist)\b|[äöüß]/g,
-    西班牙语: /\b(el|la|los|las|hola|gracias|usted|para|con|que|una|estoy)\b|[áéíóúñ¿¡]/g,
-    葡萄牙语: /\b(o|a|os|as|ola|obrigado|voce|para|com|que|uma|estou)\b|[ãõáéíóúç]/g,
-  };
-
-  const matches = lowerText.match(rules[language]);
-
-  if (matches) {
-    return matches.length * 3;
-  }
-
-  if (/^[a-z0-9\s.,!?'"-]+$/i.test(text) && ["英语", "法语", "德语", "西班牙语", "葡萄牙语"].includes(language)) {
-    return 1;
-  }
-
-  return 0;
 }
 
 function normalizeTranslationText(value) {
@@ -2437,88 +2407,116 @@ async function activateProject(projectId) {
   }
 }
 
+function createProjectListItem(project) {
+  const item = document.createElement("div");
+  item.className = [
+    "project-item",
+    project.id === state.activeProjectId ? "active" : "",
+    project.isPinned ? "pinned" : "",
+    project.isArchived ? "archived" : "",
+  ].filter(Boolean).join(" ");
+
+  const button = document.createElement("button");
+  button.className = "project-open-button";
+  button.type = "button";
+
+  const titleRow = document.createElement("span");
+  titleRow.className = "project-title-row";
+
+  const name = document.createElement("strong");
+  name.textContent = project.name;
+
+  const activityTime = document.createElement("span");
+  activityTime.className = "project-activity-time";
+  activityTime.textContent = formatProjectActivityTime(getProjectConversationTime(project));
+
+  titleRow.append(name, activityTime);
+
+  const metaRow = document.createElement("span");
+  metaRow.className = "project-meta-row";
+
+  const pair = document.createElement("span");
+  pair.className = "project-language-pair";
+  pair.textContent = formatLanguagePair(project.languageA, project.languageB);
+
+  metaRow.append(pair);
+
+  if (project.isPinned) {
+    const pin = document.createElement("span");
+    pin.className = "project-pin";
+    pin.title = "已置顶";
+    pin.setAttribute("aria-hidden", "true");
+    metaRow.append(pin);
+  }
+  button.append(titleRow, metaRow);
+  button.addEventListener("click", () => activateProject(project.id));
+
+  const menuButton = document.createElement("button");
+  menuButton.className = "project-menu-button";
+  menuButton.type = "button";
+  menuButton.setAttribute("aria-label", `项目操作：${project.name}`);
+  menuButton.textContent = "...";
+
+  const menu = document.createElement("div");
+  menu.className = "project-menu hidden";
+  item.__projectMenu = menu;
+  menu.append(
+    createProjectMenuAction(t("project.edit"), () => openProjectDialog(project.id)),
+    createProjectMenuAction(t("project.swapLanguages"), () => swapProjectLanguages(project.id)),
+    createProjectMenuAction(t("project.resetPrompt"), () => resetProjectTranslationContext(project.id)),
+    createProjectMenuAction(project.isPinned ? t("project.unpin") : t("project.pin"), () => toggleProjectPinned(project.id)),
+    createProjectMenuAction(project.isArchived ? t("project.unarchive") : t("project.archive"), () => toggleProjectArchived(project.id)),
+    createProjectMenuAction(t("project.delete"), () => deleteProject(project.id), "danger"),
+  );
+
+  menuButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const willOpen = menu.classList.contains("hidden");
+    closeProjectMenus(menu);
+    menu.classList.toggle("hidden", !willOpen);
+
+    if (willOpen) {
+      positionProjectMenu(menu, menuButton);
+    }
+  });
+
+  installProjectLongPress(item, button, menu);
+  item.append(button, menuButton);
+  document.body.append(menu);
+  return item;
+}
+
 function renderProjects() {
   closeProjectMenus();
   document.querySelectorAll(".project-menu").forEach((menu) => menu.remove());
   projectList.innerHTML = "";
+  archiveProjectList.innerHTML = "";
 
-  getSortedProjects().forEach((project) => {
-    const item = document.createElement("div");
-    item.className = [
-      "project-item",
-      project.id === state.activeProjectId ? "active" : "",
-      project.isPinned ? "pinned" : "",
-      project.isArchived ? "archived" : "",
-    ].filter(Boolean).join(" ");
+  const sortedProjects = getSortedProjects();
+  const activeProject = getActiveProject();
+  const regularProjects = sortedProjects.filter((project) => !project.isArchived);
+  const archivedProjects = sortedProjects.filter((project) => project.isArchived);
 
-    const button = document.createElement("button");
-    button.className = "project-open-button";
-    button.type = "button";
-
-    const titleRow = document.createElement("span");
-    titleRow.className = "project-title-row";
-
-    const name = document.createElement("strong");
-    name.textContent = project.name;
-
-    const activityTime = document.createElement("span");
-    activityTime.className = "project-activity-time";
-    activityTime.textContent = formatProjectActivityTime(getProjectConversationTime(project));
-
-    titleRow.append(name, activityTime);
-
-    const metaRow = document.createElement("span");
-    metaRow.className = "project-meta-row";
-
-    const pair = document.createElement("span");
-    pair.className = "project-language-pair";
-    pair.textContent = `${project.languageA} ⇄ ${project.languageB}${project.isArchived ? " · 已归档" : ""}`;
-
-    metaRow.append(pair);
-
-    if (project.isPinned) {
-      const pin = document.createElement("span");
-      pin.className = "project-pin";
-      pin.title = "已置顶";
-      pin.setAttribute("aria-hidden", "true");
-      metaRow.append(pin);
-    }
-    button.append(titleRow, metaRow);
-    button.addEventListener("click", () => activateProject(project.id));
-
-    const menuButton = document.createElement("button");
-    menuButton.className = "project-menu-button";
-    menuButton.type = "button";
-    menuButton.setAttribute("aria-label", `项目操作：${project.name}`);
-    menuButton.textContent = "...";
-
-    const menu = document.createElement("div");
-    menu.className = "project-menu hidden";
-    item.__projectMenu = menu;
-    menu.append(
-      createProjectMenuAction("编辑语言", () => openProjectDialog(project.id)),
-      createProjectMenuAction("重置提示词", () => resetProjectTranslationContext(project.id)),
-      createProjectMenuAction(project.isPinned ? "取消置顶" : "置顶", () => toggleProjectPinned(project.id)),
-      createProjectMenuAction(project.isArchived ? "取消归档" : "归档", () => toggleProjectArchived(project.id)),
-      createProjectMenuAction("删除项目", () => deleteProject(project.id), "danger"),
-    );
-
-    menuButton.addEventListener("click", (event) => {
-      event.stopPropagation();
-      const willOpen = menu.classList.contains("hidden");
-      closeProjectMenus(menu);
-      menu.classList.toggle("hidden", !willOpen);
-
-      if (willOpen) {
-        positionProjectMenu(menu, menuButton);
-      }
-    });
-
-    installProjectLongPress(item, button, menu);
-    item.append(button, menuButton);
-    document.body.append(menu);
-    projectList.append(item);
+  regularProjects.forEach((project) => {
+    projectList.append(createProjectListItem(project));
   });
+
+  if (!regularProjects.length && !activeProject?.isArchived) {
+    const empty = document.createElement("div");
+    empty.className = "project-list-empty";
+    empty.textContent = t("project.emptyRecent");
+    projectList.append(empty);
+  }
+
+  archivedProjects.forEach((project) => {
+    archiveProjectList.append(createProjectListItem(project));
+  });
+
+  archiveProjectCount.textContent = String(archivedProjects.length);
+  archiveFolderButton.hidden = archivedProjects.length === 0;
+  archiveFolderButton.setAttribute("aria-expanded", String(archiveFolderOpen));
+  archiveFolderButton.classList.toggle("open", archiveFolderOpen);
+  archiveProjectList.classList.toggle("hidden", !archiveFolderOpen || archivedProjects.length === 0);
 }
 
 function positionProjectMenu(menu, anchor) {
@@ -2663,8 +2661,25 @@ function toggleProjectArchived(projectId) {
 
   project.isArchived = !project.isArchived;
   project.updatedAt = new Date().toISOString();
+  archiveFolderOpen = project.isArchived || archiveFolderOpen;
   saveState();
   render();
+  scheduleProjectSync(project.id);
+}
+
+async function swapProjectLanguages(projectId) {
+  const project = state.projects.find((item) => item.id === projectId);
+
+  if (!project) {
+    return;
+  }
+
+  const previousLanguageA = project.languageA;
+  project.languageA = project.languageB;
+  project.languageB = previousLanguageA;
+  project.messages = project.messages.map((message, index) => normalizeMessageForProject(message, project, index));
+  await persistProjectChange(project);
+  showToast(t("project.swapped", { label: formatLanguagePair(project.languageA, project.languageB) }), "success");
 }
 
 async function deleteProject(projectId) {
@@ -2919,7 +2934,8 @@ async function persistProjectChange(project) {
     await saveProjectMarkdown(project, { automatic: true });
   } catch (error) {
     console.warn(error);
-  }
+  }
+
   scheduleProjectSync(project.id);
 }
 
@@ -3037,7 +3053,7 @@ function formatProjectActivityTime(value) {
   const now = new Date();
   const sameDay = date.toDateString() === now.toDateString();
 
-  return new Intl.DateTimeFormat("zh-CN", sameDay
+  return new Intl.DateTimeFormat(document.documentElement.lang || activeUiLanguage, sameDay
     ? { hour: "2-digit", minute: "2-digit" }
     : { month: "2-digit", day: "2-digit" }
   ).format(date);
@@ -3057,7 +3073,7 @@ function formatMessageTime(value) {
   const now = new Date();
   const includeYear = date.getFullYear() !== now.getFullYear();
 
-  return new Intl.DateTimeFormat("zh-CN", {
+  return new Intl.DateTimeFormat(document.documentElement.lang || activeUiLanguage, {
     year: includeYear ? "numeric" : undefined,
     month: "2-digit",
     day: "2-digit",
@@ -3071,15 +3087,17 @@ function renderActiveProject() {
 
   if (!project) {
     leaveMobileChat();
-    currentProjectName.textContent = "还没有项目";
-    languagePair.textContent = "请先新建项目";
+    currentProjectName.textContent = t("noProject");
+    languagePair.textContent = t("selectProjectFirst");
+    languagePair.disabled = true;
     emptyState.classList.remove("hidden");
     chatArea.classList.add("hidden");
     return;
   }
 
   currentProjectName.textContent = project.name;
-  languagePair.textContent = `${project.languageA} ⇄ ${project.languageB}`;
+  languagePair.textContent = formatLanguagePair(project.languageA, project.languageB);
+  languagePair.disabled = false;
   emptyState.classList.add("hidden");
   chatArea.classList.remove("hidden");
 
@@ -3093,6 +3111,8 @@ function isMobileLayout() {
 
 let stableAppHeight = 0;
 let imeBottom = 0;
+let manualComposerDirection = null;
+let archiveFolderOpen = false;
 
 function isTextControlFocused() {
   return Boolean(document.activeElement?.matches?.("textarea, input, select"));
@@ -3161,24 +3181,25 @@ function leaveMobileChat() {
 function render() {
   renderProjects();
   renderActiveProject();
+  refreshUiTextFit();
 }
 
 function openProjectDialog(projectId = null) {
   const project = state.projects.find((item) => item.id === projectId);
   state.editingProjectId = project?.id || null;
   projectNameInput.value = project?.name || "";
-  projectNameInput.disabled = Boolean(project);
+  projectNameInput.disabled = false;
   fillLanguageSelect(languageAInput, project?.languageA || "中文");
   fillLanguageSelect(languageBInput, project?.languageB || "英语");
   syncCustomLanguageInput(languageAInput, customLanguageAInput, project?.languageA || "");
   syncCustomLanguageInput(languageBInput, customLanguageBInput, project?.languageB || "");
   projectLanguageReviewStatus.classList.add("hidden");
-  projectLanguageReviewStatus.textContent = "正在审核自定义语言...";
-  projectDialog.querySelector("h2").textContent = project ? "项目设置" : "新建项目";
-  projectDialog.querySelector("button[type=submit]").textContent = project ? "保存" : "创建";
+  projectLanguageReviewStatus.textContent = t("language.reviewing");
+  projectDialog.querySelector("h2").textContent = project ? t("projectDialog.editTitle") : t("projectDialog.newTitle");
+  projectDialog.querySelector("button[type=submit]").textContent = project ? t("save") : t("create");
   projectDialog.showModal();
   if (!isMobileLayout()) {
-    (project ? languageAInput : projectNameInput).focus();
+    projectNameInput.focus();
   }
 }
 
@@ -3233,15 +3254,21 @@ document.addEventListener("click", () => {
   closeMessageActionMenus();
 });
 projectList.addEventListener("scroll", () => closeProjectMenus());
+archiveProjectList.addEventListener("scroll", () => closeProjectMenus());
 window.addEventListener("resize", () => closeProjectMenus());
 document.querySelector("#newProjectButton").addEventListener("click", () => openProjectDialog());
 document.querySelector("#emptyNewProjectButton").addEventListener("click", () => openProjectDialog());
+archiveFolderButton.addEventListener("click", (event) => {
+  event.stopPropagation();
+  archiveFolderOpen = !archiveFolderOpen;
+  renderProjects();
+});
 languageAInput.addEventListener("change", updateProjectLanguageInputs);
 languageBInput.addEventListener("change", updateProjectLanguageInputs);
 
 function openSettingsDialog() {
   renderSettingsForm();
-  settingsStatus.textContent = "API Key 会保存在当前浏览器本地。";
+  settingsStatus.textContent = t("settings.status");
   settingsDialog.showModal();
   if (!isMobileLayout()) {
     apiKeyInput.focus();
@@ -3252,6 +3279,23 @@ settingsButton.addEventListener("click", openSettingsDialog);
 mobileListSettingsButton.addEventListener("click", openSettingsDialog);
 mobileChatSettingsButton.addEventListener("click", openSettingsDialog);
 mobileBackButton.addEventListener("click", leaveMobileChat);
+uiLanguageInput.addEventListener("change", () => {
+  activeUiLanguage = getSupportedUiLanguage(uiLanguageInput.value);
+  storage.setItem(UI_LANGUAGE_KEY, activeUiLanguage);
+  applyUiLanguage();
+  render();
+  refreshApiStatus();
+  settingsStatus.textContent = t("uiLanguage.saved");
+});
+languagePair.addEventListener("click", async () => {
+  const project = getActiveProject();
+
+  if (!project) {
+    return;
+  }
+
+  await swapProjectLanguages(project.id);
+});
 
 apiProviderInput.addEventListener("change", () => {
   applyProviderDefaults(apiProviderInput.value, {
@@ -3303,7 +3347,7 @@ document.querySelectorAll(".secret-toggle").forEach((button) => {
     const shouldShow = input.type === "password";
     input.type = shouldShow ? "text" : "password";
     button.textContent = shouldShow ? "🙈" : "👁";
-    button.setAttribute("aria-label", shouldShow ? "隐藏密钥" : "显示密钥");
+    button.setAttribute("aria-label", shouldShow ? t("hideSecret") : t("showSecret"));
   });
 });
 
@@ -3589,11 +3633,11 @@ settingsForm.addEventListener("submit", async (event) => {
   state.proxySettings = getProxySettingsFromForm();
   state.syncSettings = syncSettings;
   state.fileSettings.enabled = fileSaveEnabledInput.checked;
-  saveApiSettings();
+  await saveApiSettings();
   saveFileSettings();
   settingsDialog.close();
   refreshApiStatus();
-  showToast("设置已保存。", "success");
+  showToast(t("settings.saved"), "success");
 });
 
 projectForm.addEventListener("submit", async (event) => {
@@ -3605,12 +3649,12 @@ projectForm.addEventListener("submit", async (event) => {
   const submitButton = projectDialog.querySelector("button[type=submit]");
 
   if (!name || languageA === languageB) {
-    showToast("请填写项目名称，并选择两种不同语言。", "warning");
+    showToast(t("project.formInvalid"), "warning");
     return;
   }
 
   projectLanguageReviewStatus.classList.remove("hidden");
-  projectLanguageReviewStatus.textContent = "正在审核自定义语言...";
+  projectLanguageReviewStatus.textContent = t("language.reviewing");
   submitButton.disabled = true;
 
   let review;
@@ -3618,14 +3662,14 @@ projectForm.addEventListener("submit", async (event) => {
   try {
     review = await reviewProjectLanguages(languageA, languageB);
   } catch (error) {
-    projectLanguageReviewStatus.textContent = error.message || "语言审核失败，请稍后再试。";
+    projectLanguageReviewStatus.textContent = error.message || t("language.reviewFailed");
     showToast(projectLanguageReviewStatus.textContent, "error", 3200);
     submitButton.disabled = false;
     return;
   }
 
   if (!review.ok) {
-    projectLanguageReviewStatus.textContent = review.message || "没有该语言。";
+    projectLanguageReviewStatus.textContent = review.message || t("language.notFound");
     showToast(projectLanguageReviewStatus.textContent, "warning", 3200);
     submitButton.disabled = false;
     return;
@@ -3635,17 +3679,24 @@ projectForm.addEventListener("submit", async (event) => {
     const project = state.projects.find((item) => item.id === state.editingProjectId);
 
     if (project) {
+      project.name = name;
       project.languageA = review.languageA;
       project.languageB = review.languageB;
       project.messages = project.messages.map((message, index) => normalizeMessageForProject(message, project, index));
       project.updatedAt = new Date().toISOString();
       saveState();
       render();
-      showToast("项目语言已更新。", "success");
+      try {
+        await saveProjectMarkdown(project, { automatic: true });
+      } catch (error) {
+        console.warn(error);
+      }
+      scheduleProjectSync(project.id);
+      showToast(t("project.updated"), "success");
     }
   } else {
     createProject(name, review.languageA, review.languageB);
-    showToast("项目已创建。", "success");
+    showToast(t("project.created"), "success");
   }
 
   submitButton.disabled = false;
@@ -3664,14 +3715,20 @@ document.querySelector("#translateForm").addEventListener("submit", async (event
     return;
   }
 
-  let fromLanguage = detectLanguage(text, project);
-  let toLanguage = fromLanguage === project.languageA ? project.languageB : project.languageA;
-  let translationLabel = `${fromLanguage} → ${toLanguage}`;
+  const direction = getComposerDirection(project, text);
+
+  if (!direction) {
+    return;
+  }
+
+  let fromLanguage = direction.fromLanguage;
+  let toLanguage = direction.toLanguage;
+  let translationLabel = formatLanguagePair(fromLanguage, toLanguage, "→");
 
   translateButton.disabled = true;
-  translateButton.textContent = "翻译中...";
-  detectedLanguage.textContent = `正在翻译：${translationLabel}`;
-  apiStatus.textContent = `正在翻译：${translationLabel}`;
+  translateButton.textContent = t("translate.loading");
+  detectedLanguage.textContent = t("translate.translating", { label: translationLabel });
+  apiStatus.textContent = t("translate.translating", { label: translationLabel });
   apiStatus.className = "api-status translating";
 
   let translatedText;
@@ -3681,19 +3738,19 @@ document.querySelector("#translateForm").addEventListener("submit", async (event
     fromLanguage = result.fromLanguage;
     toLanguage = result.toLanguage;
     translatedText = result.translatedText;
-    translationLabel = `${fromLanguage} → ${toLanguage}`;
+    translationLabel = formatLanguagePair(fromLanguage, toLanguage, "→");
 
     if (result.retried) {
-      showToast(`已自动修正方向：${translationLabel}`, "warning", 2600);
+      showToast(t("translation.autoCorrected", { label: translationLabel }), "warning", 2600);
     }
   } catch (error) {
     const errorMessage = error.message || "翻译失败，请检查 API 设置或网络。";
-    detectedLanguage.textContent = `翻译失败：${translationLabel}`;
+    detectedLanguage.textContent = t("translate.failed", { label: translationLabel });
     apiStatus.textContent = errorMessage;
     apiStatus.className = "api-status error";
     showToast(errorMessage, "error", 4200);
     translateButton.disabled = false;
-    translateButton.textContent = "翻译并加入对话";
+    translateButton.textContent = t("translate.submit");
     return;
   }
 
@@ -3712,18 +3769,20 @@ document.querySelector("#translateForm").addEventListener("submit", async (event
   project.lastMessageAt = project.updatedAt;
 
   sourceText.value = "";
+  clearManualComposerDirection();
   saveState();
   render();
-  detectedLanguage.textContent = `已完成：${translationLabel}`;
+  detectedLanguage.textContent = t("translate.done", { label: translationLabel });
   refreshApiStatus();
   translateButton.disabled = false;
-  translateButton.textContent = "翻译并加入对话";
+  translateButton.textContent = t("translate.submit");
 
   try {
     await saveProjectMarkdown(project, { automatic: true });
   } catch (error) {
     console.warn(error);
-  }
+  }
+
   scheduleProjectSync(project.id);
 });
 
@@ -3732,20 +3791,80 @@ function updateDetectedLanguagePreview() {
   const text = sourceText.value.trim();
 
   if (!project) {
-    detectedLanguage.textContent = "等待项目";
+    detectedLanguage.textContent = t("waitingProject");
+    detectedLanguage.disabled = true;
+    detectedLanguage.classList.remove("manual");
     return;
   }
 
   if (!text) {
-    detectedLanguage.textContent = "等待输入";
+    clearManualComposerDirection();
+    detectedLanguage.textContent = t("waitingInput");
+    detectedLanguage.disabled = true;
+    detectedLanguage.classList.remove("manual");
     return;
   }
 
-  const language = detectLanguage(text, project);
-  detectedLanguage.textContent = language ? `${language} → ${language === project.languageA ? project.languageB : project.languageA}` : "等待输入";
+  const direction = getComposerDirection(project, text);
+  detectedLanguage.textContent = direction ? formatLanguagePair(direction.fromLanguage, direction.toLanguage, "→") : t("waitingInput");
+  detectedLanguage.disabled = !direction;
+  detectedLanguage.classList.toggle("manual", Boolean(direction?.manual));
+  detectedLanguage.title = direction?.manual ? t("detected.manualTitle") : t("detected.autoTitle");
 }
 
-sourceText.addEventListener("input", updateDetectedLanguagePreview);
+function getAutoComposerDirection(project, text) {
+  const fromLanguage = detectLanguage(text, project);
+
+  if (!fromLanguage) {
+    return null;
+  }
+
+  return {
+    fromLanguage,
+    toLanguage: fromLanguage === project.languageA ? project.languageB : project.languageA,
+    manual: false,
+  };
+}
+
+function getComposerDirection(project, text) {
+  if (
+    manualComposerDirection
+    && manualComposerDirection.text === text
+    && [project.languageA, project.languageB].includes(manualComposerDirection.fromLanguage)
+    && [project.languageA, project.languageB].includes(manualComposerDirection.toLanguage)
+  ) {
+    return { ...manualComposerDirection, manual: true };
+  }
+
+  return getAutoComposerDirection(project, text);
+}
+
+function clearManualComposerDirection() {
+  manualComposerDirection = null;
+}
+
+function toggleComposerDirection() {
+  const project = getActiveProject();
+  const text = sourceText.value.trim();
+  const currentDirection = project && text ? getComposerDirection(project, text) : null;
+
+  if (!currentDirection) {
+    return;
+  }
+
+  manualComposerDirection = {
+    text,
+    fromLanguage: currentDirection.toLanguage,
+    toLanguage: currentDirection.fromLanguage,
+  };
+  updateDetectedLanguagePreview();
+}
+
+sourceText.addEventListener("input", () => {
+  clearManualComposerDirection();
+  updateDetectedLanguagePreview();
+});
+detectedLanguage.addEventListener("click", toggleComposerDirection);
 sourceText.addEventListener("keydown", (event) => {
   if (event.key !== "Enter" || event.shiftKey || event.isComposing) {
     return;
@@ -3832,9 +3951,10 @@ document.addEventListener("focusin", (event) => {
 
 async function initializeApp() {
   updateAppViewportHeight();
-  loadApiSettings();
+  await loadApiSettings();
   loadFileSettings();
   loadState();
+  applyUiLanguage();
   render();
   refreshApiStatus();
 
@@ -3870,7 +3990,7 @@ if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
 
   window.addEventListener("load", async () => {
     try {
-      const registration = await navigator.serviceWorker.register("service-worker.js?v=29", {
+      const registration = await navigator.serviceWorker.register("service-worker.js?v=37", {
         updateViaCache: "none",
       });
       await registration.update();

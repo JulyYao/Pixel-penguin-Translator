@@ -1,0 +1,7 @@
+name = "dialogue-translator-sync"
+main = "worker.js"
+compatibility_date = "2026-05-29"
+
+[[kv_namespaces]]
+binding = "DIALOGUE_TRANSLATOR_SYNC"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
