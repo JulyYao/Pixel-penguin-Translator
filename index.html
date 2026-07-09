@@ -6,11 +6,11 @@
     <meta name="theme-color" content="#00a884" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="像素企鹅" />
-    <link rel="manifest" href="manifest.webmanifest?v=40" />
+    <link rel="manifest" href="manifest.webmanifest?v=41" />
     <link rel="icon" href="icon.svg?v=8" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg?v=8" />
     <title>像素企鹅</title>
-    <link rel="stylesheet" href="styles.css?v=40" />
+    <link rel="stylesheet" href="styles.css?v=41" />
   </head>
   <body>
     <div class="app-shell">
@@ -20,7 +20,7 @@
           <div>
             <div class="brand-title-row">
               <h1>像素企鹅</h1>
-              <span class="app-version">v1.2.2</span>
+              <span class="app-version">v1.3.0</span>
             </div>
             <p data-i18n="app.subtitle">用对话记录双语翻译</p>
           </div>
@@ -287,6 +287,13 @@
             <button id="saveAllMarkdownButton" class="ghost-button" type="button" data-i18n="files.saveAll">立即保存全部</button>
           </div>
           <div id="fileSaveStatus" class="api-dialog-status" data-i18n="files.status">请在 Edge 中选择项目里的“对话记录”文件夹。每个项目会保存为一个文件夹，里面包含 `对话.md`。</div>
+          <div class="api-dialog-status" data-i18n="archiveZip.hint">ZIP 导出会备份所有项目、删除记录和 Token 统计；导入仅支持像素企鹅导出的 ZIP。</div>
+          <div class="file-save-row zip-archive-row">
+            <button id="exportZipButton" class="ghost-button" type="button" data-i18n="archiveZip.export">导出 ZIP</button>
+            <button id="importZipButton" class="ghost-button" type="button" data-i18n="archiveZip.import">导入 ZIP</button>
+          </div>
+          <input id="importZipInput" type="file" accept=".zip,application/zip,application/x-zip-compressed" hidden />
+          <div id="zipArchiveStatus" class="api-dialog-status" data-i18n="archiveZip.status">请选择一个文件夹导出，或导入像素企鹅备份 ZIP。</div>
         </section>
 
         <div id="settingsStatus" class="api-dialog-status" data-i18n="settings.status">API Key 会保存在当前浏览器本地。</div>
@@ -301,9 +308,9 @@
       </form>
     </dialog>
 
-    <script src="app-config.js?v=40"></script>
-    <script src="app-utils.js?v=40"></script>
-    <script src="language-detector.js?v=40"></script>
-    <script src="app.js?v=40"></script>
+    <script src="app-config.js?v=41"></script>
+    <script src="app-utils.js?v=41"></script>
+    <script src="language-detector.js?v=41"></script>
+    <script src="app.js?v=41"></script>
   </body>
 </html>

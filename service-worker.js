@@ -1,12 +1,12 @@
-﻿const CACHE_NAME = "dialogue-translator-shell-v40";
+﻿const CACHE_NAME = "dialogue-translator-shell-v41";
 const APP_SHELL = [
   "./",
-  "./index.html?v=40",
-  "./styles.css?v=40",
-  "./app-config.js?v=40",
-  "./app-utils.js?v=40",
-  "./language-detector.js?v=40",
-  "./app.js?v=40",
+  "./index.html?v=41",
+  "./styles.css?v=41",
+  "./app-config.js?v=41",
+  "./app-utils.js?v=41",
+  "./language-detector.js?v=41",
+  "./app.js?v=41",
   "./manifest.webmanifest",
   "./icon.svg",
   "./pixel_penguin_export.png"
@@ -40,11 +40,11 @@ self.addEventListener("fetch", (event) => {
       fetch(request)
         .then((response) => {
           const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put("./index.html?v=40", copy));
+          caches.open(CACHE_NAME).then((cache) => cache.put("./index.html?v=41", copy));
           return response;
         })
         .catch(async () => {
-          return (await caches.match("./index.html?v=40"))
+          return (await caches.match("./index.html?v=41"))
             || (await caches.match("./"))
             || Response.error();
         })
@@ -76,3 +76,4 @@ self.addEventListener("fetch", (event) => {
       })
   );
 });
+

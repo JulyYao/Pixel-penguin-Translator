@@ -1,4 +1,4 @@
-const {
+﻿const {
   languages,
   customLanguageNames,
   uiLanguages,
@@ -143,6 +143,10 @@ const chooseRecordsFolderButton = document.querySelector("#chooseRecordsFolderBu
 const importMarkdownButton = document.querySelector("#importMarkdownButton");
 const saveAllMarkdownButton = document.querySelector("#saveAllMarkdownButton");
 const fileSaveStatus = document.querySelector("#fileSaveStatus");
+const exportZipButton = document.querySelector("#exportZipButton");
+const importZipButton = document.querySelector("#importZipButton");
+const importZipInput = document.querySelector("#importZipInput");
+const zipArchiveStatus = document.querySelector("#zipArchiveStatus");
 
 function matchSupportedUiLanguage(languageCode) {
   const normalizedCode = String(languageCode || "").trim().replace(/_/g, "-");
@@ -2250,6 +2254,275 @@ async function saveAllMarkdown() {
   }
 }
 
+function renderZipArchiveStatus(message) {
+  if (!zipArchiveStatus) {
+    return;
+  }
+
+  zipArchiveStatus.textContent = message || t("archiveZip.status");
+}
+
+function createZipTimestamp(date = new Date()) {
+  const year = Math.max(1980, date.getFullYear());
+  const dosTime = (date.getHours() << 11) | (date.getMinutes() << 5) | Math.floor(date.getSeconds() / 2);
+  const dosDate = ((year - 1980) << 9) | ((date.getMonth() + 1) << 5) | date.getDate();
+  return { dosTime, dosDate };
+}
+
+function createCrc32Table() {
+  const table = new Uint32Array(256);
+
+  for (let index = 0; index < 256; index += 1) {
+    let value = index;
+
+    for (let bit = 0; bit < 8; bit += 1) {
+      value = value & 1 ? 0xedb88320 ^ (value >>> 1) : value >>> 1;
+    }
+
+    table[index] = value >>> 0;
+  }
+
+  return table;
+}
+
+const crc32Table = createCrc32Table();
+
+function calculateCrc32(bytes) {
+  let crc = 0xffffffff;
+
+  bytes.forEach((byte) => {
+    crc = crc32Table[(crc ^ byte) & 0xff] ^ (crc >>> 8);
+  });
+
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+function writeUint16(view, offset, value) {
+  view.setUint16(offset, value, true);
+}
+
+function writeUint32(view, offset, value) {
+  view.setUint32(offset, value >>> 0, true);
+}
+
+function encodeZipText(value) {
+  return new TextEncoder().encode(String(value ?? ""));
+}
+
+function sanitizeArchiveFileName(value) {
+  return String(value || "project")
+    .replace(/[\\/:*?"<>|\u0000-\u001f]/g, "-")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 80) || "project";
+}
+
+function createZipArchive(files) {
+  const localParts = [];
+  const centralParts = [];
+  let offset = 0;
+  const timestamp = createZipTimestamp();
+
+  files.forEach((file) => {
+    const nameBytes = encodeZipText(file.name);
+    const contentBytes = file.content instanceof Uint8Array ? file.content : encodeZipText(file.content);
+    const crc = calculateCrc32(contentBytes);
+
+    const localHeader = new Uint8Array(30 + nameBytes.length);
+    const localView = new DataView(localHeader.buffer);
+    writeUint32(localView, 0, 0x04034b50);
+    writeUint16(localView, 4, 20);
+    writeUint16(localView, 6, 0x0800);
+    writeUint16(localView, 8, 0);
+    writeUint16(localView, 10, timestamp.dosTime);
+    writeUint16(localView, 12, timestamp.dosDate);
+    writeUint32(localView, 14, crc);
+    writeUint32(localView, 18, contentBytes.length);
+    writeUint32(localView, 22, contentBytes.length);
+    writeUint16(localView, 26, nameBytes.length);
+    writeUint16(localView, 28, 0);
+    localHeader.set(nameBytes, 30);
+
+    localParts.push(localHeader, contentBytes);
+
+    const centralHeader = new Uint8Array(46 + nameBytes.length);
+    const centralView = new DataView(centralHeader.buffer);
+    writeUint32(centralView, 0, 0x02014b50);
+    writeUint16(centralView, 4, 20);
+    writeUint16(centralView, 6, 20);
+    writeUint16(centralView, 8, 0x0800);
+    writeUint16(centralView, 10, 0);
+    writeUint16(centralView, 12, timestamp.dosTime);
+    writeUint16(centralView, 14, timestamp.dosDate);
+    writeUint32(centralView, 16, crc);
+    writeUint32(centralView, 20, contentBytes.length);
+    writeUint32(centralView, 24, contentBytes.length);
+    writeUint16(centralView, 28, nameBytes.length);
+    writeUint16(centralView, 30, 0);
+    writeUint16(centralView, 32, 0);
+    writeUint16(centralView, 34, 0);
+    writeUint16(centralView, 36, 0);
+    writeUint32(centralView, 38, 0);
+    writeUint32(centralView, 42, offset);
+    centralHeader.set(nameBytes, 46);
+    centralParts.push(centralHeader);
+
+    offset += localHeader.length + contentBytes.length;
+  });
+
+  const centralSize = centralParts.reduce((total, part) => total + part.length, 0);
+  const endHeader = new Uint8Array(22);
+  const endView = new DataView(endHeader.buffer);
+  writeUint32(endView, 0, 0x06054b50);
+  writeUint16(endView, 8, files.length);
+  writeUint16(endView, 10, files.length);
+  writeUint32(endView, 12, centralSize);
+  writeUint32(endView, 16, offset);
+  writeUint16(endView, 20, 0);
+
+  return new Blob([...localParts, ...centralParts, endHeader], { type: "application/zip" });
+}
+
+function createArchiveFileName() {
+  const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/T/, "-").slice(0, 15);
+  return `pixel-penguin-backup-${stamp}.zip`;
+}
+
+function createProjectsArchiveBlob() {
+  if (!state.projects.length) {
+    throw new Error(t("archiveZip.noProjects"));
+  }
+
+  const syncDocument = createSyncDocument();
+  const archiveDocument = {
+    app: "pixel-penguin-translator",
+    formatVersion: 1,
+    exportedAt: new Date().toISOString(),
+    ...syncDocument,
+  };
+
+  const files = [
+    {
+      name: "manifest.json",
+      content: JSON.stringify({
+        app: archiveDocument.app,
+        formatVersion: archiveDocument.formatVersion,
+        exportedAt: archiveDocument.exportedAt,
+        projectCount: archiveDocument.projects.length,
+      }, null, 2),
+    },
+    {
+      name: "projects.json",
+      content: JSON.stringify(archiveDocument, null, 2),
+    },
+  ];
+
+  state.projects.forEach((project, index) => {
+    files.push({
+      name: `markdown/${String(index + 1).padStart(2, "0")}-${sanitizeArchiveFileName(project.name)}-${project.id}.md`,
+      content: projectToMarkdown(project),
+    });
+  });
+
+  return createZipArchive(files);
+}
+
+async function saveBlobToDirectory(blob, fileName) {
+  if (!("showDirectoryPicker" in window)) {
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = fileName;
+    anchor.click();
+    URL.revokeObjectURL(url);
+    return "download";
+  }
+
+  const directoryHandle = await window.showDirectoryPicker({ mode: "readwrite" });
+  const fileHandle = await directoryHandle.getFileHandle(fileName, { create: true });
+  const writable = await fileHandle.createWritable();
+  await writable.write(blob);
+  await writable.close();
+  return "folder";
+}
+
+async function exportProjectsZipArchive() {
+  const fileName = createArchiveFileName();
+  const blob = createProjectsArchiveBlob();
+  const destination = await saveBlobToDirectory(blob, fileName);
+  return { fileName, destination };
+}
+
+function parseStoredZipEntries(arrayBuffer) {
+  const view = new DataView(arrayBuffer);
+  const decoder = new TextDecoder();
+  const entries = new Map();
+  let offset = 0;
+
+  while (offset + 30 <= view.byteLength) {
+    const signature = view.getUint32(offset, true);
+
+    if (signature !== 0x04034b50) {
+      break;
+    }
+
+    const flags = view.getUint16(offset + 6, true);
+    const method = view.getUint16(offset + 8, true);
+    const compressedSize = view.getUint32(offset + 18, true);
+    const fileNameLength = view.getUint16(offset + 26, true);
+    const extraLength = view.getUint16(offset + 28, true);
+    const nameStart = offset + 30;
+    const dataStart = nameStart + fileNameLength + extraLength;
+    const dataEnd = dataStart + compressedSize;
+
+    if ((flags & 0x0008) || method !== 0 || dataEnd > view.byteLength) {
+      throw new Error(t("archiveZip.importFailed"));
+    }
+
+    const name = decoder.decode(new Uint8Array(arrayBuffer, nameStart, fileNameLength));
+    const data = decoder.decode(new Uint8Array(arrayBuffer, dataStart, compressedSize));
+    entries.set(name, data);
+    offset = dataEnd;
+  }
+
+  return entries;
+}
+
+function parseArchiveDocument(entries) {
+  const raw = entries.get("projects.json");
+
+  if (!raw) {
+    throw new Error(t("archiveZip.importFailed"));
+  }
+
+  let data;
+
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    throw new Error(t("archiveZip.importFailed"));
+  }
+
+  if (data?.app !== "pixel-penguin-translator" || !Array.isArray(data.projects)) {
+    throw new Error(t("archiveZip.importFailed"));
+  }
+
+  return data;
+}
+
+async function importProjectsZipArchive(file) {
+  if (!file) {
+    return null;
+  }
+
+  const entries = parseStoredZipEntries(await file.arrayBuffer());
+  const data = parseArchiveDocument(entries);
+  const result = mergeProjectCollection(data.projects, data.deletedProjects || {}, data.deletedMessages || {});
+  mergeTokenUsageByClient(data.tokenUsageByClient || {});
+  saveState();
+  render();
+  return result;
+}
 async function checkApiConnection(settings = state.apiSettings) {
   if (!settings.apiKey || !settings.model || !settings.baseUrl) {
     throw new Error("请填写 API Key、模型和 Base URL。");
@@ -3654,6 +3927,52 @@ saveAllMarkdownButton.addEventListener("click", async () => {
   }
 });
 
+
+exportZipButton.addEventListener("click", async () => {
+  exportZipButton.disabled = true;
+  renderZipArchiveStatus(t("archiveZip.exporting"));
+
+  try {
+    const result = await exportProjectsZipArchive();
+    renderZipArchiveStatus(`${t("archiveZip.exported")} ${result.fileName}`);
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      renderZipArchiveStatus(t("archiveZip.status"));
+    } else {
+      renderZipArchiveStatus(error.message || t("archiveZip.importFailed"));
+    }
+  } finally {
+    exportZipButton.disabled = false;
+  }
+});
+
+importZipButton.addEventListener("click", () => {
+  importZipInput.value = "";
+  importZipInput.click();
+});
+
+importZipInput.addEventListener("change", async () => {
+  const [file] = importZipInput.files || [];
+
+  if (!file) {
+    return;
+  }
+
+  importZipButton.disabled = true;
+  renderZipArchiveStatus(t("archiveZip.importing"));
+
+  try {
+    const result = await importProjectsZipArchive(file);
+    if (result) {
+      renderZipArchiveStatus(`${t("archiveZip.imported")} ${result.projects} / ${result.newMessages}`);
+    }
+  } catch (error) {
+    renderZipArchiveStatus(error.message || t("archiveZip.importFailed"));
+  } finally {
+    importZipButton.disabled = false;
+    importZipInput.value = "";
+  }
+});
 settingsForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
@@ -4060,7 +4379,7 @@ if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
 
   window.addEventListener("load", async () => {
     try {
-      const registration = await navigator.serviceWorker.register("service-worker.js?v=40", {
+      const registration = await navigator.serviceWorker.register("service-worker.js?v=41", {
         updateViaCache: "none",
       });
       await registration.update();

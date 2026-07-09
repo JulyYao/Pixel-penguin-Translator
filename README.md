@@ -1,107 +1,144 @@
-# 像素企鹅 Pixel Penguin
+﻿# 像素企鹅
 
-[English README](README_EN.md) | [更新日志](CHANGELOG.md)
+这是一个纯前端的双语翻译工具原型。用户可以在页面里配置 ChatGPT / OpenAI、DeepSeek 或其他 OpenAI-compatible API，然后直接通过模型 API 翻译。
 
-像素企鹅是一个由vibe coding生成的轻量级的双语对话翻译前端工具，将翻译内容以对话方式，并保存到本地或者gist同步。
+## 当前已经完成
 
-## 功能
+- 新建项目。
+- 每个项目设置语言-左和语言-右。
+- 每个项目可以选择“自定义语言”，输入目标语言后先审核，确认存在后再进入对话。
+- 在多个项目之间快速切换。
+- 输入内容后自动判断它更像左侧语言还是右侧语言。
+- 输入左侧语言时，左侧出现翻译气泡。
+- 输入右侧语言时，右侧出现翻译气泡。
+- 气泡主内容显示译文，下方保留原文。
+- 气泡宽度会根据内容长度自适应。
+- 项目、对话记录和 API 设置会保存到浏览器本地。
+- 左下角设置面板支持 ChatGPT / OpenAI、DeepSeek 和自定义 OpenAI-compatible 服务。
+- 支持读取模型列表；读取失败时保留预设模型，并允许手动输入模型名。
+- 支持备用 API：主 API 单次翻译连续超时 3 次后临时使用备用 API，下一次翻译仍优先主 API。
+- 支持保存 HTTP / SOCKS5 本地代理配置，供后续本地代理桥或苹果 App 使用。
+- 支持项目内容同步设置：打开项目时同步一次，也可以在新增消息后上传一次。
+- 支持 Markdown 本地保存：连接项目里的 `对话记录` 文件夹后，每个项目会保存为一个文件夹，里面包含 `对话.md`。
+- 支持 ZIP 导入 / 导出：可把所有项目、删除记录和 Token 使用量打包备份，也可导入像素企鹅导出的 ZIP。
 
-- 按项目管理双语对话
-- 自动识别输入语言，并翻译到另一侧语言
-- 类聊天软件的左右气泡界面
-- 项目置顶、归档、删除和语言编辑
-- 消息复制、编辑、删除、置顶
-- API Provider 配置，支持 OpenAI 兼容接口
-- 千问 / Qwen、DeepSeek、自定义兼容接口等模型配置
-- 主 API 与备用 API
-- Token 使用量统计
-- 可选 GitHub Gist / 自定义服务同步
-- PWA 支持，可添加到手机主屏幕
-- 本地 Markdown 记录导入/导出
-- 移动端适配
+## 项目结构
 
-## 快速开始
+- `index.html`：页面结构。
+- `styles.css`：界面样式。
+- `app.js`：项目、对话、自动语言检测、本地保存和模型 API 请求逻辑。
 
-这是纯前端项目，不需要安装依赖。
+## 本地运行
 
-直接用浏览器打开：
-
-```text
-index.html
-```
-
-也可以启动一个本地静态服务器：
+这个项目不需要 Python 后端。启动静态服务：
 
 ```bash
-python -m http.server 8765
+python -m http.server 8765 --bind 127.0.0.1
 ```
 
-然后访问：
+然后打开：
 
 ```text
-http://127.0.0.1:8765
+http://127.0.0.1:8765/
 ```
 
-## API 设置
+## 设置
 
-首次使用需要在设置里填写你自己的 API 信息：
+在页面左下角点击“设置”，可以配置：
 
-- Provider
-- API Key
-- Base URL
-- Model
+- 主 API：服务商、API Key、模型、Base URL。
+- 备用 API：主 API 连续超时 3 次后临时启用。
+- 本地代理：HTTP / SOCKS5 的主机和端口。
+- 同步：配置你自己的同步服务器，用于跨端同步项目和翻译内容。
+- 文件：连接本地 `对话记录` 文件夹，把项目内容保存为 Markdown，也可以导入 / 导出像素企鹅 ZIP 备份。
 
-本仓库不包含任何 API Key。请不要把自己的 Key 提交到 GitHub。
+API Key 会保存在当前浏览器本地，用于直接请求模型 API。
 
-千问兼容接口示例：
+## 本地 Markdown 保存
+
+项目里有一个 `对话记录` 文件夹。打开页面后，在设置 -> 文件里点击“连接对话记录文件夹”，选择这个文件夹。
+
+连接成功后：
+
+- 每个项目会创建一个独立文件夹。
+- 每个项目文件夹里会保存 `对话.md`。
+- 新增翻译后会自动更新当前项目的 Markdown 文件。
+- “立即保存全部”会把所有项目写入 Markdown。
+
+浏览器安全限制不允许网页静默写入任意磁盘路径，所以每次重新打开浏览器后，可能需要重新连接一次文件夹。
+
+模型选择策略：
+
+- 优先点击“读取模型”，从服务商 `/models` 接口读取可用模型。
+- 如果读取失败，使用内置预设模型。
+- 任何时候都可以在“手动模型”里直接填写模型名。
+
+代理说明：普通浏览器网页不能直接为 `fetch` 指定 HTTP / SOCKS5 代理；当前配置会先保存下来，方便后续接本地代理桥或封装苹果 App 时使用。
+
+
+## ZIP 备份
+
+设置 -> 文件里可以使用“导出 ZIP”和“导入 ZIP”。
+
+- 导出会让你选择保存文件夹，并自动命名为 `pixel-penguin-backup-日期时间.zip`。
+- ZIP 内包含 `projects.json` 和每个项目的 Markdown 备份。
+- 导入只接受像素企鹅导出的 ZIP；格式不正确会提示导入失败。
+- ZIP 会带上删除记录和 Token 使用量，适合换电脑、手动备份或临时迁移。
+## 内容同步协议
+
+如果启用同步，前端会请求：
 
 ```text
-Base URL: https://dashscope.aliyuncs.com/compatible-mode/v1
-Model: qwen-mt-plus 或 qwen-mt-turbo
+POST {同步服务地址}/projects/sync
 ```
 
-## PWA / 手机使用
+请求体：
 
-部署到 HTTPS 静态站点后，可以在手机浏览器中添加到主屏幕。
-
-PWA 文件包括：
-
-- `manifest.webmanifest`
-- `service-worker.js`
-- `icon.svg`
-- `pixel_penguin_export.png`
-
-## 部署
-
-适合部署到任意静态站点服务：
-
-- GitHub Pages
-- Tencent EdgeOne Pages
-- Cloudflare Pages
-- Netlify
-- Vercel Static
-- 任意 Nginx / 静态文件服务器
-
-部署时请确保以下文件在站点根目录：
-
-```text
-index.html
-app.js
-styles.css
-manifest.webmanifest
-service-worker.js
-icon.svg
-pixel_penguin_export.png
-_headers
+```json
+{
+  "clientId": "当前设备 ID",
+  "project": {
+    "id": "项目 ID",
+    "name": "项目名称",
+    "languageA": "中文",
+    "languageB": "英语",
+    "messages": []
+  }
+}
 ```
 
-## 同步说明
+服务器应返回合并后的项目：
 
-项目支持内容同步，但同步需要你自己配置：
+```json
+{
+  "project": {
+    "id": "同一个项目 ID",
+    "name": "项目名称",
+    "languageA": "中文",
+    "languageB": "英语",
+    "messages": []
+  }
+}
+```
 
-- GitHub Gist Token
-- 或自建同步服务地址
+前端会按消息 `id` 合并内容；如果远端消息更新时间更新，会覆盖本地同 ID 消息。打开项目时可以同步一次，新增翻译后也可以上传一次。
 
-## 安全提醒
+## API 报错排查
 
-这是纯前端应用。API Key 如果直接填在浏览器里，会保存在当前浏览器本地。公共多人使用时，建议搭建自己的后端代理，不要把 Key 暴露给用户。
+如果“测试连接”报错：
+
+- `401` / `Unauthorized` 通常是 API Key 错误或服务商不接受这个 Key。
+- `404` / `model not found` 通常是模型名不正确，先点“读取模型”，或手动换成服务商支持的模型。
+- `网络请求被浏览器拦截或无法连接` 通常不是 Key 本身问题，而是浏览器 CORS、网络或代理限制。公开网页直连很多模型 API 会遇到这种限制，后续可以用本地代理桥或苹果 App 环境解决。
+
+## 发布提醒
+
+如果这是给自己使用，直接在浏览器里保存自己的 API Key 是可以接受的原型方式。
+
+如果要发布成公开网页，不要把你的个人 API Key 写死到 HTML 或 JavaScript 里。公开网页更适合让每个用户填写自己的 Key，或者以后再改成服务端代理。
+
+## 部署与同步
+
+- 前端已支持 PWA：包含 `manifest.webmanifest`、`service-worker.js` 和 `icon.svg`，部署到 HTTPS 后可在手机上添加到主屏幕。
+- 同步服务模板在 `sync-worker/`，使用 Cloudflare Workers + KV 保存项目和对话内容。
+- 详细部署步骤见 `DEPLOY.md`。
