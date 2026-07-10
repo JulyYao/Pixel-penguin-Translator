@@ -2,6 +2,7 @@
 const TOKEN_USAGE_KEY = "token-usage-by-client";
 const DELETED_PROJECTS_KEY = "deleted-projects";
 const DELETED_MESSAGES_KEY = "deleted-messages";
+const MAX_SYNC_BODY_BYTES = 5 * 1024 * 1024;
 
 function json(data, init = {}) {
   const headers = new Headers(init.headers || {});
@@ -22,17 +23,25 @@ function unauthorized() {
 }
 
 function assertAuth(request, env) {
-  if (!env.SYNC_TOKEN) {
-    return true;
-  }
-
   const header = request.headers.get("Authorization") || "";
   return header === `Bearer ${env.SYNC_TOKEN}`;
 }
 
 async function readJson(request) {
+  const declaredLength = Number(request.headers.get("Content-Length") || 0);
+
+  if (declaredLength > MAX_SYNC_BODY_BYTES) {
+    throw new Error("同步请求过大。");
+  }
+
+  const text = await request.text();
+
+  if (new TextEncoder().encode(text).byteLength > MAX_SYNC_BODY_BYTES) {
+    throw new Error("同步请求过大。");
+  }
+
   try {
-    return await request.json();
+    return text ? JSON.parse(text) : {};
   } catch {
     return {};
   }
@@ -354,6 +363,10 @@ export default {
       return handleOptions();
     }
 
+    if (!env.SYNC_TOKEN) {
+      return json({ error: "同步服务未配置 SYNC_TOKEN。" }, { status: 503 });
+    }
+
     if (!assertAuth(request, env)) {
       return unauthorized();
     }
@@ -375,16 +388,17 @@ export default {
       }
 
       if (request.method === "POST" && url.pathname === "/projects/sync") {
-        return syncOne(request, env);
+        return await syncOne(request, env);
       }
 
       if (request.method === "POST" && url.pathname === "/projects/sync-all") {
-        return syncAll(request, env);
+        return await syncAll(request, env);
       }
 
       return json({ error: "Not found" }, { status: 404 });
     } catch (error) {
-      return json({ error: error.message || "同步服务错误。" }, { status: 500 });
+      const status = error.message === "同步请求过大。" ? 413 : 500;
+      return json({ error: error.message || "同步服务错误。" }, { status });
     }
   },
 };

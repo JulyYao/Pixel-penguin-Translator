@@ -4,10 +4,10 @@
 /index.html
   Cache-Control: no-cache, no-store, must-revalidate
 
-/app.js
+/assets/js/*.js
   Cache-Control: no-cache, no-store, must-revalidate
 
-/styles.css
+/assets/css/*.css
   Cache-Control: no-cache, no-store, must-revalidate
 
 /service-worker.js
