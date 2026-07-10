@@ -26,6 +26,22 @@ records/
 *.apk
 *.ipa
 
+# Legacy root files moved out of the clean release
+DEPLOY.md
+IPHONE_LOCAL.md
+LOCAL_SYNC.md
+MOBILE_DEPLOY.md
+PUBLIC_RELEASE.md
+README_EN.md
+app-utils.js
+language-detector.js
+styles.css
+icon.svg
+pixel_penguin_export.png
+brand/
+scripts/run_stability_test.py
+start-mac-lan.command
+
 # OS / editor
 .DS_Store
 Thumbs.db
